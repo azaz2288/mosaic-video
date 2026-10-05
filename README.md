@@ -1,20 +1,18 @@
 # Mosaic · 本地视频社区
 
-参考视频社区的浏览与互动方式：真实视频上传、分类搜索、播放、评论、弹幕、点赞和收藏。首版为单用户本地工作台。
-
-**状态：v0.1 可运行基础版，按路线图持续开发。默认只允许本机访问。**
+**v0.2 可运行功能版**。默认只允许本机访问。
 
 ## 已实现
 
-- 限额流式上传 MP4/WebM，检查容器头并随机化存储名称
-- 视频列表、搜索与分类；原生视频播放与HTTP Range
-- 评论、带时间戳的弹幕、点赞与收藏持久化
-- 播放页、弹幕显示开关与收藏筛选
-- 清晰空状态，不填充虚构内容和播放统计
+- MP4/WebM流式上传、512MiB限额、SHA256去重、随机文件名、上传取消和残留回收
+- 注册登录、scrypt密码哈希、会话过期撤销、作者页、本人编辑、隐藏和恢复作品
+- 持久FFmpeg队列、重启恢复、失败重试、封面、480p/720p HLS、hls.js浏览器播放
+- 账户独立点赞收藏、关注、历史、合集、分页评论、弹幕节流、消息和作品举报记录
+- FTS5标题/简介搜索，短词回退检索，分区筛选与带原因的同分区推荐
 
 ## 运行
 
-需要 Python 3.12。Windows PowerShell：
+Python 3.12，Windows PowerShell：
 
 ```powershell
 python -m venv .venv
@@ -22,11 +20,11 @@ python -m venv .venv
 .venv\Scripts\python.exe -m uvicorn app.main:app --host 127.0.0.1 --port 8766
 ```
 
-浏览器打开 http://127.0.0.1:8766 。其他系统用 `.venv/bin/python`；已安装依赖可直接运行 `run.cmd`。配置 `APP_DATA_DIR` 可改变数据目录。
+打开 http://127.0.0.1:8766 。已有依赖时可用 `run.cmd`。其他系统使用 `.venv/bin/python`。`APP_DATA_DIR`覆盖数据目录。
 
-## 数据
+## 数据与备份
 
-data/app.db 和 data/media/，用户视频、评论与收藏仅存本地。上传失败清除临时文件。
+数据位于data/，已排除Git；不要提交数据库、导入内容、磁盘清单或密钥。详细启动、备份和部署边界见 [运行说明](docs/OPERATIONS.md)。
 
 ## 验证
 
@@ -35,18 +33,16 @@ python -m unittest discover -s tests -v
 python -m compileall -q app tests
 ```
 
-CI在Linux和Windows运行相同测试。实际执行证据见 [进度](docs/PROGRESS.md)。
+15项全部通过，包含真实生成视频→封面→两档HLS、跨用户编辑/收藏隔离、去重、历史合集和举报。浏览器HLS readyState=4，8.03秒媒体可解码。 Linux/Windows CI使用同一提交验证。
 
 ## 已知边界
 
-- 仅绑定回环地址，尚无账户、生产权限或公网部署保障
-- 没有FFmpeg转码；MP4/WebM容器校验不保证浏览器支持内部编码
-- 单文件最高512MiB；评论与弹幕以本地用户身份保存
-- 没有CDN、推荐算法、内容审核或版权内容；不复制B站素材和商标
+- 上传检查容器头；后台FFmpeg真实解码决定转码是否成功。不是同步ffprobe完整校验。
+- 单进程本机队列；单任务转码超时5分钟，长视频可能失败；480/720会放大低分辨率视频。
+- 举报由作品所有者审阅，尚无独立平台管理员审核；同分区推荐不是学习式个性化推荐。
+- 数据和媒体保存在本机；对象存储、CDN、分布式转码和公网部署仍待建设。
+- 默认回环访问，访客local是本机共享空间；账户可隔离内容，但不是公网多租户安全承诺。Cookie为本机HTTP设置，公网需TLS、安全Cookie、关闭访客、限流与部署审计。
 
-## 设计与后续
-
-- [架构设计](docs/DESIGN.md)
-- [按顺序开发的里程碑](docs/ROADMAP.md)
+[架构设计](docs/DESIGN.md) · [路线图](docs/ROADMAP.md) · [验收记录](docs/PROGRESS.md)
 
 MIT License。用户导入内容不随源码发布。

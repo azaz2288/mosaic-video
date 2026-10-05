@@ -43,6 +43,16 @@ class AccountTests(unittest.TestCase):
         self.assertEqual(self.b.post('/api/community/collections/'+collection+'/'+ident).status_code,200)
         self.b.post('/api/videos/'+ident+'/comments',json={'text':'great'})
         self.assertEqual(len(self.a.get('/api/community/notifications').json()),1)
+    def test_resume_position_is_private_persistent_and_finite(self):
+        ident=self.video();route='/api/community/videos/'+ident+'/history'
+        self.b.post(route+'?position=4.5')
+        self.assertEqual(self.b.get(route).json()['position'],4.5)
+        self.assertEqual(self.a.get(route).json()['position'],0)
+        for value in ['nan','inf','-1','86401']:
+            self.assertEqual(self.b.post(route+'?position='+value).status_code,422)
+        self.assertEqual(self.b.get(route).json()['position'],4.5)
+        self.a.delete('/api/community/videos/'+ident)
+        self.assertEqual(self.b.get(route).status_code,404)
     def test_report_and_follow(self):
         ident=self.video();author=self.a.get('/api/auth/me').json()['id']
         self.assertTrue(self.b.post('/api/community/authors/'+author+'/follow').json()['following'])

@@ -33,7 +33,7 @@ python -m unittest discover -s tests -v
 python -m compileall -q app tests
 ```
 
-15项全部通过，包含真实生成视频→封面→两档HLS、跨用户编辑/收藏隔离、去重、历史合集和举报。浏览器HLS readyState=4，8.03秒媒体可解码。 Linux/Windows CI使用同一提交验证。
+16项全部通过，包含真实生成视频→封面→两档HLS、跨用户编辑/收藏隔离、去重、历史合集和举报。浏览器HLS readyState=4，8.03秒媒体可解码。 Linux/Windows CI使用同一提交验证。
 
 ## 已知边界
 
@@ -46,3 +46,5 @@ python -m compileall -q app tests
 [架构设计](docs/DESIGN.md) · [路线图](docs/ROADMAP.md) · [验收记录](docs/PROGRESS.md)
 
 MIT License。用户导入内容不随源码发布。
+
+使用体验修正：观看位置续播、播放速度、HLS失败回退、手机行内播放与首页加载更多已接入。详细边界见docs/PROGRESS.md。

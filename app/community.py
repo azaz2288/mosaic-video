@@ -1,6 +1,6 @@
 from pathlib import Path
 import time,uuid
-from fastapi import HTTPException,Request
+from fastapi import HTTPException,Request,Query
 from pydantic import BaseModel,Field
 from .common import database
 
@@ -68,11 +68,17 @@ def install_community(app,root,identity,enqueue):
             else:db.execute('INSERT INTO follows VALUES(?,?)',(user,author));state=True
         return {'following':state}
     @app.post('/api/community/videos/{ident}/history')
-    def history_add(ident:str,request:Request,position:float=0):
+    def history_add(ident:str,request:Request,position:float=Query(0,ge=0,le=86400,allow_inf_nan=False)):
         with database(root) as db:
             if not db.execute('SELECT 1 FROM videos WHERE id=? AND hidden=0',(ident,)).fetchone():raise HTTPException(404,'视频不存在')
             db.execute('INSERT OR REPLACE INTO view_history VALUES(?,?,?,?)',(identity(request)['id'],ident,max(0,min(position,86400)),time.time()))
         return {'ok':True}
+    @app.get('/api/community/videos/{ident}/history')
+    def history_position(ident:str,request:Request):
+        with database(root) as db:
+            if not db.execute('SELECT 1 FROM videos WHERE id=? AND hidden=0',(ident,)).fetchone():raise HTTPException(404,'视频不存在')
+            row=db.execute('SELECT position FROM view_history WHERE user_id=? AND video_id=?',(identity(request)['id'],ident)).fetchone()
+        return {'position':row['position'] if row else 0}
     @app.get('/api/community/history')
     def history(request:Request):
         with database(root) as db:return [dict(r) for r in db.execute('SELECT h.*,v.title FROM view_history h JOIN videos v ON v.id=h.video_id WHERE user_id=? AND v.hidden=0 ORDER BY updated DESC LIMIT 100',(identity(request)['id'],))]

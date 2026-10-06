@@ -1,5 +1,14 @@
 # 开发记录
 
+## 2026-10-07 v0.2.1 不放大转码阶段
+
+- 旧代码固定480/720高度且master硬编码尺寸。新增320×180验收旧代码缺variants失败；实现decoded-frame双维上限、偶数对齐、保留SAR，真实output stream尺寸用于master和持久API/UI。SQLite additive列迁移与显式INSERT兼容旧任务，旧媒体不自动重建。
+- 24Python方法（8新增），真实6source subcases：竖屏、宽屏、方形、奇数尺寸、SAR=2、90°rotation，分别转两档并重新解码检查尺寸与显示比例；原低清case追加两档320×180/master校验。旧schema重复启动/metadata持久化/queued/legacy、parser不误取input尺寸及畸形fail-closed验证。
+- Fixture首次5case失败为FFmpeg拒`.5`时长，改`0.5`；旧metadata rotate未写显示矩阵，改display_rotation后rotation通过，不当源码漏洞。Node UI边界、compile、JS syntax与根维护工具5tests通过；FastAPI现有httpx弃用警告仍在。
+- 独立8893合成8秒视频浏览器：低清720档实际320×180、竖屏480档270×480，readyState4/duration8，清晰度标签准确、console errors=[]。截图存本地维护目录；未浏览8766现有服务/用户视频。demo生成与队列等待合计低清1.187s、竖屏1.062s，单机短片观察非长视频吞吐/SLA。
+- 测试module-level bootstrap默认临时APP_DATA_DIR；demo用新temp，Enter停止服务后正常清理。完整SHA/同SHA CI终态存根maintenance报告，不用历史绿灯代替。
+- 本次不完成完整probe、取消/总timeout、峰值bandwidth测量、重复档去重、公网部署。480/720是上限，两档低清可能同尺寸；旧媒体无自动升级。继续第一未完路线，非整个项目完工。
+
 ## v0.1 验证
 
 - 上传、容器检查、随机文件名、Range播放、搜索、分类、评论、弹幕与个人收藏已实现。

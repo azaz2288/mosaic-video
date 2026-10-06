@@ -16,4 +16,10 @@ jobs:
           cache: pip
       - run: python -m pip install -r requirements.txt
       - run: python -m unittest discover -s tests -v
-      - run: python -m compileall -q app tests
+      - run: python -m compileall -q app tests tools
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: node --check app/web/media-profiles.js
+      - run: node --check app/web/community.js
+      - run: node tests/media_profiles_ui.cjs

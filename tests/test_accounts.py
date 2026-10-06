@@ -5,6 +5,7 @@ from pathlib import Path
 import os,tempfile,unittest
 from unittest.mock import patch
 from fastapi.testclient import TestClient
+from test_support import bootstrap
 from app.main import create_app
 from app.common import database
 

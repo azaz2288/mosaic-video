@@ -2,6 +2,7 @@ from pathlib import Path
 import os,subprocess,tempfile,time,unittest
 from unittest.mock import patch
 from fastapi.testclient import TestClient
+from test_support import bootstrap
 from app.main import create_app
 from app.transcode import ffmpeg
 
@@ -21,6 +22,9 @@ class TranscodeTests(unittest.TestCase):
                 self.assertEqual(state['state'],'completed',state)
                 self.assertEqual(client.get('/api/videos/'+video['id']+'/assets/poster.jpg').status_code,200)
                 for height in (480,720):self.assertIn('#EXTM3U',client.get('/api/videos/'+video['id']+f'/assets/{height}/index.m3u8').text)
+                self.assertEqual([(v['width'],v['height']) for v in state['variants']],[(320,180),(320,180)])
+                master=client.get('/api/videos/'+video['id']+'/assets/master.m3u8').text
+                self.assertEqual(master.count('RESOLUTION=320x180'),2)
                 self.assertEqual(client.get('/api/videos/'+video['id']+'/assets/../../app.db').status_code,404)
 
 if __name__=='__main__':unittest.main()

@@ -2,6 +2,7 @@ from pathlib import Path
 import tempfile
 import unittest
 from fastapi.testclient import TestClient
+from test_support import bootstrap
 from app.main import create_app
 
 WEBM=b'\x1a\x45\xdf\xa3'+b'container fixture only'*20

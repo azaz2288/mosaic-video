@@ -26,7 +26,7 @@ class Danmaku(BaseModel):
 
 def create_app(root=None):
     root=Path(root or data_root("mosaic"))
-    app=prepare(FastAPI(title="Mosaic",version="0.2.0"),root)
+    app=prepare(FastAPI(title="Mosaic",version="0.2.1"),root)
     media=root/'media';media.mkdir(exist_ok=True)
     for stale in media.glob('*.partial'):
         if time.time()-stale.stat().st_mtime>86400:stale.unlink(missing_ok=True)

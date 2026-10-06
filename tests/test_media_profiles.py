@@ -81,9 +81,10 @@ class ProfileTests(unittest.TestCase):
                         self.assertLessEqual(h,min(height,int(profile)))
                         self.assertEqual((w%2,h%2),(0,0))
                         segment=root/'state'/'processed'/ident/profile/'segment00000.ts'
-                        # Decode a real RGB frame, not FFmpeg's null muxer's
-                        # wrapped_avframe path (bundled Linux 7.0.2 crashed there).
-                        decoded=subprocess.run([exe,'-hide_banner','-nostats','-nostdin','-noautorotate','-i',str(segment),'-map','0:v:0','-frames:v','1','-c:v','rawvideo','-pix_fmt','rgb24','-f','rawvideo','-'],capture_output=True,check=True,timeout=30)
+                        # Output is known MPEG-TS with rotation baked into frames.
+                        # Pin its demuxer instead of probing a tiny 2-frame TS;
+                        # still decode real pixels and verify dimensions/SAR.
+                        decoded=subprocess.run([exe,'-hide_banner','-nostats','-nostdin','-f','mpegts','-i',str(segment),'-map','0:v:0','-frames:v','1','-c:v','rawvideo','-pix_fmt','rgb24','-f','rawvideo','-'],capture_output=True,check=True,timeout=30)
                         self.assertEqual(output_dimensions(decoded.stderr),(w,h))
                         self.assertEqual(len(decoded.stdout),w*h*3)
                         # Decoded display aspect agrees with source up to rounding.

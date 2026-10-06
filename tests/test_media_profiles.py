@@ -84,7 +84,9 @@ class ProfileTests(unittest.TestCase):
                         # Output is known MPEG-TS with rotation baked into frames.
                         # Pin its demuxer instead of probing a tiny 2-frame TS;
                         # still decode real pixels and verify dimensions/SAR.
-                        decoded=subprocess.run([exe,'-hide_banner','-nostats','-nostdin','-f','mpegts','-i',str(segment),'-map','0:v:0','-frames:v','1','-c:v','rawvideo','-pix_fmt','rgb24','-f','rawvideo','-'],capture_output=True,check=True,timeout=30)
+                        decoder=os.environ.get('MEDIA_VERIFY_FFMPEG',exe)
+                        decoded=subprocess.run([decoder,'-hide_banner','-nostats','-nostdin','-f','mpegts','-i',str(segment),'-map','0:v:0','-frames:v','1','-c:v','rawvideo','-pix_fmt','rgb24','-f','rawvideo','-'],capture_output=True,timeout=30)
+                        self.assertEqual(decoded.returncode,0,decoded.stderr.decode(errors='replace')[-4000:])
                         self.assertEqual(output_dimensions(decoded.stderr),(w,h))
                         self.assertEqual(len(decoded.stdout),w*h*3)
                         # Decoded display aspect agrees with source up to rounding.

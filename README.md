@@ -34,7 +34,7 @@ python -m compileall -q app tests
 node tests/media_profiles_ui.cjs
 ```
 
-24项Python测试，包含实际低清/竖屏/宽屏/方形/奇数尺寸/SAR/旋转视频→封面→两档HLS→解码尺寸校验，以及旧队列迁移、账户隔离与社区回归。Node验证清晰度标签与旧任务回退。测试启动默认临时APP_DATA_DIR，不加载现有用户数据库。Linux/Windows CI验证同一提交；最新发布证据见本地维护报告。
+24项Python测试，包含实际低清/竖屏/宽屏/方形/奇数尺寸/SAR/旋转视频→封面→两档HLS→实际像素/尺寸校验，以及旧队列迁移、账户隔离与社区回归。Node验证清晰度标签与旧任务回退。测试启动默认临时APP_DATA_DIR，不加载现有用户数据库。Linux CI用apt系统FFmpeg独立验证imageio生成的HLS（MEDIA_VERIFY_FFMPEG仅测试decoder覆盖），避免bundled7.0.2读取短TS时的崩溃；Windows默认bundleddecoder。崩溃内部原因未定位，不保证此binary的任意媒体解码。最新同SHA发布证据见本地维护报告。
 
 ## 已知边界
 

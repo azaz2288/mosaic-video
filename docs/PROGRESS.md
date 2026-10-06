@@ -2,6 +2,8 @@
 
 ## 2026-10-07 v0.2.1 不放大转码阶段
 
+- 第三2d3ded4 CI37507404789 bundledLinuxFFmpeg7.0.2仍在读取TS crash，不能宣称mpegts选择已修复。新增独立Linux系统FFmpeg验证输出（apt安装/明确MEDIA_VERIFY_FFMPEG，仅测试decoder替换；app/source生成仍imageio7），仍检查实际像素/两维/SAR/master，stderr失败可诊断。本地Windows默认bundleddecoder；新CI必须完成，崩溃历史保持公开。
+
 - 第二2f4fa7a CI37507054068 Linux decode-to-RGB仍SIGSEGV，因此不能认定nullmuxer单独致因。第三验证明确已知MPEG-TS demuxer、取消输出segment无必要的noautorotate，保持真实像素/尺寸/SAR断言；不跳过Linux/重刷旧失败。具体内部库故障未定位，需新CI证明fixture decode路径兼容。
 
 - 首提交49e05be CI37506634203真实Linux failure：6case在HLS转码成功后测试decode-to-null命令SIGSEGV（bundledLinuxFFmpeg7.0.2）；Windows测试/JS全成功但matrix取消，不标跨平台通过。测试改显式RGB rawvideo真实一帧，并检查字节数w×h×3，保留dims/SAR assertions；fail-fast关闭以保留完整两平台诊断。新提交需同SHA终态验证，不重刷旧run。

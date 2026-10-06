@@ -2,6 +2,8 @@
 
 ## 2026-10-07 v0.2.1 不放大转码阶段
 
+- 首提交49e05be CI37506634203真实Linux failure：6case在HLS转码成功后测试decode-to-null命令SIGSEGV（bundledLinuxFFmpeg7.0.2）；Windows测试/JS全成功但matrix取消，不标跨平台通过。测试改显式RGB rawvideo真实一帧，并检查字节数w×h×3，保留dims/SAR assertions；fail-fast关闭以保留完整两平台诊断。新提交需同SHA终态验证，不重刷旧run。
+
 - 旧代码固定480/720高度且master硬编码尺寸。新增320×180验收旧代码缺variants失败；实现decoded-frame双维上限、偶数对齐、保留SAR，真实output stream尺寸用于master和持久API/UI。SQLite additive列迁移与显式INSERT兼容旧任务，旧媒体不自动重建。
 - 24Python方法（8新增），真实6source subcases：竖屏、宽屏、方形、奇数尺寸、SAR=2、90°rotation，分别转两档并重新解码检查尺寸与显示比例；原低清case追加两档320×180/master校验。旧schema重复启动/metadata持久化/queued/legacy、parser不误取input尺寸及畸形fail-closed验证。
 - Fixture首次5case失败为FFmpeg拒`.5`时长，改`0.5`；旧metadata rotate未写显示矩阵，改display_rotation后rotation通过，不当源码漏洞。Node UI边界、compile、JS syntax与根维护工具5tests通过；FastAPI现有httpx弃用警告仍在。

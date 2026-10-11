@@ -26,7 +26,7 @@ class Danmaku(BaseModel):
 
 def create_app(root=None):
     root=Path(root or data_root("mosaic"))
-    app=prepare(FastAPI(title="Mosaic",version="0.2.1"),root)
+    app=prepare(FastAPI(title="Mosaic",version="0.2.2"),root)
     media=root/'media';media.mkdir(exist_ok=True)
     for stale in media.glob('*.partial'):
         if time.time()-stale.stat().st_mtime>86400:stale.unlink(missing_ok=True)
@@ -41,7 +41,7 @@ def create_app(root=None):
         for table,column,ddl in [('videos','owner',"TEXT DEFAULT 'local'"),('videos','hidden','INTEGER DEFAULT 0'),('videos','digest',"TEXT DEFAULT ''"),('comments','owner',"TEXT DEFAULT 'local'"),('danmaku','owner',"TEXT DEFAULT 'local'")]:
             if column not in {r[1] for r in db.execute(f'PRAGMA table_info({table})')}:db.execute(f'ALTER TABLE {table} ADD COLUMN {column} {ddl}')
         db.execute('CREATE TABLE IF NOT EXISTS interactions(user_id TEXT,video_id TEXT,liked INTEGER DEFAULT 0,favorite INTEGER DEFAULT 0,PRIMARY KEY(user_id,video_id))')
-    enqueue=install_media(app,root)
+    enqueue=install_media(app,root,identity)
     install_community(app,root,identity,enqueue)
     def video(db,ident,user='local'):
         row=db.execute('SELECT * FROM videos WHERE id=?',(ident,)).fetchone()

@@ -30,3 +30,4 @@ jobs:
       - run: node --check app/web/media-profiles.js
       - run: node --check app/web/community.js
       - run: node tests/media_profiles_ui.cjs
+      - run: node --test tests/media_control_ui.cjs

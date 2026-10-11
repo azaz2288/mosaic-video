@@ -23,3 +23,22 @@ function updateMediaProfiles(job) {
   }));
   select.value = options.some(o => o.value === selected) ? selected : 'original';
 }
+
+function updateProcessingControls(job, mine) {
+  const cancel = document.querySelector('#cancel-media');
+  const retry = document.querySelector('#retry-media');
+  const active = ['queued','running','cancelling'].includes(job.state);
+  if (cancel) {
+    cancel.classList.toggle('hidden', !mine || !active);
+    cancel.disabled = job.state === 'cancelling';
+    cancel.textContent = job.state === 'cancelling' ? '正在取消…' : '取消转码';
+  }
+  if (retry) {
+    retry.classList.toggle('hidden', !mine);
+    retry.disabled = active;
+  }
+}
+
+function processingResponseIsCurrent(id, generation, video, currentGeneration) {
+  return generation === currentGeneration && video?.id === id;
+}

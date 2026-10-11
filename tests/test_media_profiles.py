@@ -80,7 +80,7 @@ class ProfileTests(unittest.TestCase):
                         self.assertLessEqual(w,min(width,854 if profile=='480' else 1280))
                         self.assertLessEqual(h,min(height,int(profile)))
                         self.assertEqual((w%2,h%2),(0,0))
-                        segment=root/'state'/'processed'/ident/profile/'segment00000.ts'
+                        segment=root/'state'/'processed'/ident/state['artifact_id']/profile/'segment00000.ts'
                         # Output is known MPEG-TS with rotation baked into frames.
                         # Pin its demuxer instead of probing a tiny 2-frame TS;
                         # still decode real pixels and verify dimensions/SAR.

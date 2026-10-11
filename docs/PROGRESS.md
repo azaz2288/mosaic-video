@@ -1,5 +1,13 @@
 # 开发记录
 
+## 2026-10-11 v0.2.2 总预算/作者取消与产物保护
+
+- 首5新方法在旧实现3fail/2missing-module errors，证实取消缺接口、active重试可替换行、partial资源会返回200。新增11方法最终35Python全通过28.997s；含真实sleep子进程cancel/timeout回收、跨调用共用deadline、结束后复验、关闭requeue、取消重启保持、最终编码后取消禁止发布、IO/超时通用错误脱敏、active retry/账户/Origin、日志读取限额和配置拒绝、旧成功目录保留/独占新产物、rename后SQLite事务回滚不服务orphan/同worker重试。持久DB不可用时的自动恢复仍不承诺。
+- media_process.py在monotonic deadline内轮询直接FFmpeg，取消terminate/必要kill/wait。单任务默认300s、服务端1..3600，不把排队计入。attempt staging→唯一jobID目录→conditional completed/artifact指针；asset拒绝非completed与暂存，legacy空artifact兼容。无进程树隔离/硬资源沙箱、跨DB/FS原子断电/GC保证，崩溃或提交故障可留不可访问orphan。
+- 页面作者取消/取消中/总预算、active禁重试、终态可显式重试。processing响应验证videoID+watch代次，旧响应不更新；5Node tests和原清晰度10assertions通过。actual cancel handler不在finally覆写cancelling禁用/导航后不重开旧响应；compileall/JS语法/diff/root5通过，既有FastAPI httpx弃用提示保留。
+- 独立8897原创4秒320×180合成演示：queued取消→cancelled、原视频readyState4/duration4、重试后queued/disabled、390×844内容375px；新artifact目录HLS readyState4/duration4/320×180、console error/warn空；截图在本地maintenance/reports。演示worker暂停以确定排队UI，不冒称浏览器取消真实长FFmpeg（实际进程取消由Python边界验收）。不访问8766用户服务/私有视频/付费API。
+- 完整probe/重复档去重/实测码率/公网部署仍未完成；当前源码发布完整SHA、同SHA Windows/Linux CI与18巡检证据保存在根每日报告，不用父提交绿灯冒充。
+
 ## 2026-10-07 v0.2.1 不放大转码阶段
 
 - 第三2d3ded4 CI37507404789 bundledLinuxFFmpeg7.0.2仍在读取TS crash，不能宣称mpegts选择已修复。新增独立Linux系统FFmpeg验证输出（apt安装/明确MEDIA_VERIFY_FFMPEG，仅测试decoder替换；app/source生成仍imageio7），仍检查实际像素/两维/SAR/master，stderr失败可诊断。本地Windows默认bundleddecoder；新CI必须完成，崩溃历史保持公开。

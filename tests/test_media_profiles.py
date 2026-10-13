@@ -95,6 +95,16 @@ class ProfileTests(unittest.TestCase):
                         actual_sar=int(match[1])/int(match[2]) if match else 1
                         self.assertAlmostEqual(w/h*actual_sar,width/height*int(sar),places=3)
                         self.assertIn(f'RESOLUTION={w}x{h}',master)
+                        from fractions import Fraction
+                        import math
+                        playlist=segment.parent/'index.m3u8'
+                        duration=Fraction(re.search(r'#EXTINF:([0-9.]+),',playlist.read_text())[1])
+                        expected=math.ceil(Fraction(segment.stat().st_size*8,1)/duration)
+                        self.assertEqual(variant['bandwidth'],expected)
+                        self.assertEqual(variant['average_bandwidth'],expected)
+                        self.assertIn(f'BANDWIDTH={expected},',master)
+                        self.assertIn(f'AVERAGE-BANDWIDTH={expected}',master)
+                        self.assertIn('#EXT-X-TARGETDURATION:1',playlist.read_text())
                     restarted=TestClient(create_app(root/'state'))
                     self.assertEqual(restarted.get(f'/api/videos/{ident}/processing').json()['variants'],state['variants'])
 

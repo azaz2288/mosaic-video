@@ -9,6 +9,14 @@ from app.main import create_app
 from app.common import database
 
 
+def synthetic_output(command, text='synthetic'):
+    output=Path(command[-1])
+    if output.suffix=='.m3u8':
+        (output.parent/'segment00000.ts').write_bytes(b'x'*188)
+        output.write_text('#EXTM3U\n#EXT-X-VERSION:3\n#EXT-X-TARGETDURATION:1\n#EXT-X-MEDIA-SEQUENCE:0\n#EXT-X-PLAYLIST-TYPE:VOD\n#EXTINF:1.000000,\nsegment00000.ts\n#EXT-X-ENDLIST\n',encoding='ascii')
+    else:output.write_text(text,encoding='utf-8')
+
+
 class MediaControlTests(unittest.TestCase):
     def upload(self, client):
         return client.post('/api/videos', data={'title':'Synthetic control','category':'创作'},
@@ -137,7 +145,7 @@ class MediaControlTests(unittest.TestCase):
             with self.subTest(failure=failure),tempfile.TemporaryDirectory() as tmp,patch.dict(os.environ,{'MEDIA_WORKER':'1'}):
                 root=Path(tmp);calls=[]
                 def encode(command,deadline,check):
-                    calls.append(deadline);Path(command[-1]).write_text('synthetic',encoding='utf-8')
+                    calls.append(deadline);synthetic_output(command)
                     if failure=='timeout' and len(calls)==2:raise MediaDeadline()
                     if failure=='io' and len(calls)==2:raise OSError('private path must not escape')
                     if failure=='cancel' and len(calls)==3:
@@ -175,7 +183,7 @@ class MediaControlTests(unittest.TestCase):
             self.assertEqual(client.get(route+'/media').status_code,200)
             self.assertEqual(client.post(f'/api/community/videos/{ident}/retry').status_code,200)
             def encode(command,deadline,check):
-                Path(command[-1]).write_text('new synthetic output',encoding='utf-8')
+                synthetic_output(command,'new synthetic output')
                 return b'Output #0, hls\n Stream #0:0: Video: h264, yuv420p, 320x180, 10 fps'
             with patch.dict(os.environ,{'MEDIA_WORKER':'1'}),patch('app.transcode.run_process',side_effect=encode),TestClient(app) as active:
                 job=self.wait_job(active,ident,{'completed'})
@@ -196,7 +204,7 @@ class MediaControlTests(unittest.TestCase):
                         faults.append(1)
                         raise sqlite3.OperationalError('synthetic private commit failure')
             def encode(command,deadline,check):
-                Path(command[-1]).write_text('synthetic',encoding='utf-8')
+                synthetic_output(command)
                 return b'Output #0, hls\n Stream #0:0: Video: h264, yuv420p, 320x180, 10 fps'
             with patch('app.transcode.database',side_effect=fail_publication_once),patch('app.transcode.run_process',side_effect=encode),TestClient(create_app(root)) as client:
                 ident=self.upload(client);job=self.wait_job(client,ident,{'failed'})

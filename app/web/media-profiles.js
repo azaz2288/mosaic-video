@@ -10,11 +10,15 @@ function updateMediaProfiles(job) {
     if (variants.length) {
       for (const v of variants) {
         if (!['480','720'].includes(v.profile) || !Number.isInteger(v.width) || !Number.isInteger(v.height)) continue;
-        options.push({value:v.profile, label:`HLS ${v.width}×${v.height}（${v.profile} 档上限）`});
+        const measured = v.bandwidth_source === 'measured-segment-windows-v1' &&
+          Number.isSafeInteger(v.bandwidth) && v.bandwidth > 0 &&
+          Number.isSafeInteger(v.average_bandwidth) && v.average_bandwidth > 0;
+        const rate = measured ? `实测峰值 ${v.bandwidth} bps / 平均 ${v.average_bandwidth} bps${v.bandwidth_window === 'short-vod-single-segment' ? '（极短片段）' : ''}` : '码率未实测';
+        options.push({value:v.profile, label:`HLS ${v.width}×${v.height}（${v.profile} 档上限） · ${rate}`});
       }
     } else {
       // Completed pre-migration jobs remain playable, without inventing size.
-      for (const profile of ['480','720']) options.push({value:profile, label:`HLS ${profile} 档（旧任务，尺寸未记录）`});
+      for (const profile of ['480','720']) options.push({value:profile, label:`HLS ${profile} 档（旧任务，尺寸未记录；码率未实测）`});
     }
   }
   select.replaceChildren(...options.map(o => {

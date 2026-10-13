@@ -1,10 +1,13 @@
 """Independent synthetic media demo. Enter stops server and cleans its temp data."""
 from pathlib import Path
-import os, subprocess, sys, tempfile, threading, time, json
+import os, subprocess, sys, tempfile, threading, time, json, argparse
 sys.path.insert(0,str(Path(__file__).resolve().parents[1]))
 
 
 def main():
+    parser=argparse.ArgumentParser(description=__doc__)
+    parser.add_argument('--port',type=int,default=8893)
+    args=parser.parse_args()
     with tempfile.TemporaryDirectory(prefix='mosaic-profiles-demo-') as tmp:
         root=Path(tmp);os.environ['APP_DATA_DIR']=str(root/'bootstrap')
         os.environ['MEDIA_WORKER']='1'
@@ -28,10 +31,10 @@ def main():
                 evidence.append({'source':[width,height],'seconds_including_queue_wait':round(time.monotonic()-started,3),'variants':job['variants']})
         os.environ['MEDIA_WORKER']='0'
         app=create_app(root/'state')
-        server=uvicorn.Server(uvicorn.Config(app,host='127.0.0.1',port=8893,log_level='warning'))
+        server=uvicorn.Server(uvicorn.Config(app,host='127.0.0.1',port=args.port,log_level='warning',timeout_graceful_shutdown=3))
         thread=threading.Thread(target=server.run);thread.start()
         print(json.dumps(evidence,ensure_ascii=True),flush=True)
-        print('Synthetic demo http://127.0.0.1:8893/ ; Enter stops and cleans temporary data',flush=True)
+        print(f'Synthetic demo http://127.0.0.1:{args.port}/ ; Enter stops and cleans temporary data',flush=True)
         try:input()
         finally:
             server.should_exit=True;thread.join(timeout=15)

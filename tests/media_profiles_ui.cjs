@@ -9,16 +9,24 @@ context.updateMediaProfiles({state:'queued',variants:[]});
 assert.equal(select.children.length,1);
 context.updateMediaProfiles({state:'completed',variants:[{profile:'480',width:320,height:180},{profile:'720',width:320,height:180}]});
 assert.equal(select.children.length,4);
-assert.equal(select.children[2].textContent,'HLS 320×180（480 档上限）');
+assert.equal(select.children[2].textContent,'HLS 320×180（480 档上限） · 码率未实测');
 assert.equal(select.children[3].value,'720');
 select.value='720';context.updateMediaProfiles({state:'completed',variants:[{profile:'720',width:360,height:640}]});
 assert.equal(select.value,'720');
 context.updateMediaProfiles({state:'running'});
 assert.equal(select.value,'original');assert.equal(select.children.length,1);
 context.updateMediaProfiles({state:'completed'});
-assert.match(select.children[2].textContent,/旧任务，尺寸未记录/);
+assert.match(select.children[2].textContent,/旧任务，尺寸未记录；码率未实测/);
 context.updateMediaProfiles({state:'completed',variants:[{profile:'../bad',width:2,height:2},{profile:'480',width:'320',height:180}]});
 assert.equal(select.children.length,2);
+context.updateMediaProfiles({state:'completed',variants:[{profile:'480',width:320,height:180,bandwidth:1504,average_bandwidth:1200,bandwidth_source:'measured-segment-windows-v1',bandwidth_window:'target-duration'}]});
+assert.match(select.children[2].textContent,/实测峰值 1504 bps \/ 平均 1200 bps/);
+for (const metadata of [{bandwidth_source:'historical'},{bandwidth:NaN},{average_bandwidth:-1},{bandwidth:1e20}]) {
+  context.updateMediaProfiles({state:'completed',variants:[{profile:'480',width:320,height:180,bandwidth:1504,average_bandwidth:1200,bandwidth_source:'measured-segment-windows-v1',...metadata}]});
+  assert.match(select.children[2].textContent,/码率未实测/);
+}
+context.updateMediaProfiles({state:'completed',variants:[{profile:'480',width:320,height:180,bandwidth:1504,average_bandwidth:1200,bandwidth_source:'measured-segment-windows-v1',bandwidth_window:'short-vod-single-segment'}]});
+assert.match(select.children[2].textContent,/极短片段/);
 context.document.querySelector=()=>null;
 assert.doesNotThrow(()=>context.updateMediaProfiles({state:'completed'}));
-console.log('Media profile UI: 10 assertions passed');
+console.log('Media profile UI: 16 assertions passed');

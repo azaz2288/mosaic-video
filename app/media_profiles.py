@@ -25,7 +25,9 @@ def output_dimensions(log):
 def master_playlist(variants):
     rows = ['#EXTM3U']
     for variant in variants:
+        average = (f",AVERAGE-BANDWIDTH={variant['average_bandwidth']}"
+                   if 'average_bandwidth' in variant else '')
         rows.extend([f"#EXT-X-STREAM-INF:BANDWIDTH={variant['bandwidth']},"
-                     f"RESOLUTION={variant['width']}x{variant['height']}",
+                     f"RESOLUTION={variant['width']}x{variant['height']}{average}",
                      f"{variant['profile']}/index.m3u8"])
     return '\n'.join(rows) + '\n'

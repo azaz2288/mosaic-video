@@ -1,5 +1,13 @@
 # 开发记录
 
+## 2026-10-14 v0.2.3 HLS实测码率
+
+- 首新测试缺media_bandwidth模块；实现精确Fraction连续目标窗口peak/整VOD average并ceil，SQLite/master/API持久化来源。旧历史1M/2M不再给新任务；UI旧来源/非法数值标未知，新菜单显示bps，極短VOD单段fallback明确标注。真实FFmpeg0.5秒输出target0，严格仅修自产staging为1，旧媒体不重写。
+- 新13Python方法包含60组seeded独立枚举oracle、真实13秒FFmpeg四段与1秒短尾、小hot尾不能单段替标准窗口、精确小数/短片、结构/URI/限额、缺空/非普通文件、祖先symlink/真实Windows junction、观察后segment/playlist变化与计算期取消/deadline、坏测量失败不发布/原视频保留/同worker retry。旧取消/发布mock改生成有效合成playlist而非绕过measurement；真实6source两档重新解码，size/EXTINF独立核对API/master和重启metadata。最终48方法与同SHA平台结果见根本日报告；原35保留。
+- Node5实际控制handler与16码率/legacy/非法数值断言通过。初变化fixture第8callback发生在stat之前，改第17点在统计窗口阶段，不将正常首次观察变化当漏洞。目录只比较身份/type，避免把兄弟文件创建误当路径替换。旧API列迁移不变。
+- 独立临时8901原创8秒320x180/360x640，后者两档270x480/360x640实测226916/460788bps；IAB实际720HLS readyState4/duration8/360x640，390x844长标签横溢出533>375，CSS菜单限宽后body=client375/select343.2。早期点击未更新，只读CDP确认handler已绑定后正常点击成功，无事件修复或bug解决虚报。真实手机/用户8766未验未改。computer-use推动像素/移动验证，planning-with-files保存断点。
+- 只测TS封装rate，不是完整probe/视频质量/网络吞吐/恶意媒体隔离；仍有重复低清档、check后竞态/阻塞IO、崩溃orphan/无fsync/硬限额、平台管理和公网待完。完整SHA/同SHA Windows/Linux CI与18项目最终核对在外部维护报告，避免纯证据文档再提交。
+
 ## 2026-10-11 v0.2.2 总预算/作者取消与产物保护
 
 - 首5新方法在旧实现3fail/2missing-module errors，证实取消缺接口、active重试可替换行、partial资源会返回200。新增11方法最终35Python全通过28.997s；含真实sleep子进程cancel/timeout回收、跨调用共用deadline、结束后复验、关闭requeue、取消重启保持、最终编码后取消禁止发布、IO/超时通用错误脱敏、active retry/账户/Origin、日志读取限额和配置拒绝、旧成功目录保留/独占新产物、rename后SQLite事务回滚不服务orphan/同worker重试。持久DB不可用时的自动恢复仍不承诺。

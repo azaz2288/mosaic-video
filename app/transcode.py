@@ -6,6 +6,7 @@ from fastapi import HTTPException,Request
 from fastapi.responses import FileResponse
 from .common import database
 from .media_profiles import scale_filter, output_dimensions, master_playlist
+from .media_bandwidth import measure_playlist
 from .media_process import run_process,check_deadline,MediaCancelled,MediaStopped,MediaDeadline
 
 def ffmpeg():
@@ -69,8 +70,8 @@ def install_media(app,root,identity):
                         log=run(['-map','0:v:0','-map','0:a:0?','-vf',scale_filter(width_cap,height),'-c:v','libx264','-preset','veryfast','-crf','25','-pix_fmt','yuv420p','-c:a','aac','-b:a','96k','-f','hls','-hls_time','4','-hls_playlist_type','vod','-hls_segment_filename',str(folder/'segment%05d.ts'),str(folder/'index.m3u8')])
                         width,actual_height=output_dimensions(log)
                         if width>width_cap or actual_height>height:raise RuntimeError('转码输出超过尺寸上限')
-                        # Historical bandwidth estimates, not measured peak rates.
-                        variants.append({'profile':str(height),'width':width,'height':actual_height,'bandwidth':1000000 if height==480 else 2000000})
+                        rates=measure_playlist(folder/'index.m3u8',deadline,interrupted)
+                        variants.append({'profile':str(height),'width':width,'height':actual_height,**rates})
                     (target/'master.m3u8').write_text(master_playlist(variants),encoding='utf-8')
                     check_deadline(deadline,interrupted)
                     with database(root) as db:

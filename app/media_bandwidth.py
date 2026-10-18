@@ -5,12 +5,41 @@ For a VOD shorter than the minimum window, report maximum individual rate
 with an explicit fallback marker. This is not a network/codec media probe.
 """
 from fractions import Fraction
-import math, os, re, stat
+import hashlib, math, os, re, stat
 from .media_process import check_deadline
 
 MAX_PLAYLIST_BYTES = 1024 * 1024
 MAX_SEGMENTS = 4096
 SOURCE = 'measured-segment-windows-v1'
+CONTENT_SOURCE = 'sha256-vod-bytes-v1'
+HASH_CHUNK_BYTES = 1024 * 1024
+
+
+def hash_segment(digest, path, initial, checkpoint):
+    """Read no more than the observed size + one EOF byte, with bounded memory."""
+    checkpoint()
+    if fingerprint(path) != initial:raise RuntimeError('HLS片段已变化')
+    flags = os.O_RDONLY | getattr(os, 'O_BINARY', 0) | getattr(os, 'O_NOFOLLOW', 0)
+    with os.fdopen(os.open(path, flags), 'rb') as stream:
+        opened = os.fstat(stream.fileno())
+        descriptor = (opened.st_dev, opened.st_ino, opened.st_mode,
+                      opened.st_size, opened.st_mtime_ns)
+        if descriptor != initial[:5]:raise RuntimeError('HLS片段已变化')
+        remaining = initial[3]
+        while remaining:
+            checkpoint()
+            chunk = stream.read(min(HASH_CHUNK_BYTES, remaining))
+            if not chunk:raise RuntimeError('HLS片段已截断')
+            digest.update(chunk);remaining -= len(chunk)
+        checkpoint()
+        if stream.read(1):raise RuntimeError('HLS片段已增长')
+        finished = os.fstat(stream.fileno())
+        if ((finished.st_dev, finished.st_ino, finished.st_mode,
+             finished.st_size, finished.st_mtime_ns, finished.st_ctime_ns) !=
+                (*descriptor, opened.st_ctime_ns)):
+            raise RuntimeError('HLS片段已变化')
+    checkpoint()
+    if fingerprint(path) != initial:raise RuntimeError('HLS片段已变化')
 
 
 def fingerprint(path, directory=False):
@@ -101,9 +130,29 @@ def measure_playlist(path, deadline, check):
     if fingerprint(path)!=initial:raise RuntimeError('HLS清单已变化')
     checkpoint()
     if repair:
-        path.write_bytes(data.replace(b'#EXT-X-TARGETDURATION:0',b'#EXT-X-TARGETDURATION:1',1))
+        data=data.replace(b'#EXT-X-TARGETDURATION:0',b'#EXT-X-TARGETDURATION:1',1)
+        path.write_bytes(data)
+        initial=fingerprint(path)
+    # Domain-separated, length-framed exact playlist + ordered segment bytes.
+    # Equal dimensions alone say nothing about encoded content or audio.
+    digest=hashlib.sha256(CONTENT_SOURCE.encode('ascii')+b'\0')
+    digest.update(len(data).to_bytes(8,'big'));digest.update(data)
+    for segment,_,info in segments:
+        name=segment.name.encode('ascii')
+        digest.update(len(name).to_bytes(8,'big'));digest.update(name)
+        digest.update(info[3].to_bytes(8,'big'))
+        hash_segment(digest,segment,info,checkpoint)
+    for segment,_,info in segments:
+        checkpoint()
+        if fingerprint(segment)!=info:raise RuntimeError('HLS片段已变化')
+    for parent,info in parents:
+        checkpoint()
+        if fingerprint(parent,True)!=info:raise RuntimeError('HLS目录已变化')
+    if fingerprint(path)!=initial:raise RuntimeError('HLS清单已变化')
     checkpoint()
     return {'bandwidth':math.ceil(peak),
             'average_bandwidth':math.ceil(Fraction(8*total_bytes,1)/total_duration),
             'bandwidth_source':SOURCE,'bandwidth_window':window,
-            'segment_count':len(segments),'duration_seconds':str(total_duration)}
+            'segment_count':len(segments),'duration_seconds':str(total_duration),
+            'content_sha256':digest.hexdigest(),'content_digest_source':CONTENT_SOURCE,
+            'output_bytes':len(data)+total_bytes}

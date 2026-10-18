@@ -14,7 +14,11 @@ function updateMediaProfiles(job) {
           Number.isSafeInteger(v.bandwidth) && v.bandwidth > 0 &&
           Number.isSafeInteger(v.average_bandwidth) && v.average_bandwidth > 0;
         const rate = measured ? `实测峰值 ${v.bandwidth} bps / 平均 ${v.average_bandwidth} bps${v.bandwidth_window === 'short-vod-single-segment' ? '（极短片段）' : ''}` : '码率未实测';
-        options.push({value:v.profile, label:`HLS ${v.width}×${v.height}（${v.profile} 档上限） · ${rate}`});
+        const merged = v.deduplication_source === 'sha256-vod-bytes-v1' &&
+          Array.isArray(v.deduplicated_profiles) ? [...new Set(v.deduplicated_profiles)]
+            .filter(p => ['480','720'].includes(p) && p !== v.profile) : [];
+        const dedup = merged.length ? ` · 已合并字节相同的 ${merged.join('/')} 档` : '';
+        options.push({value:v.profile, label:`HLS ${v.width}×${v.height}（${v.profile} 档上限） · ${rate}${dedup}`});
       }
     } else {
       // Completed pre-migration jobs remain playable, without inventing size.

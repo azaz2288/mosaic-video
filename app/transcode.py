@@ -65,13 +65,26 @@ def install_media(app,root,identity):
                     target=Path(staging)
                     run(['-map','0:v:0','-frames:v','1','-vf',scale_filter(480,480),str(target/'poster.jpg')])
                     for height in (480,720):
-                        folder=target/str(height);folder.mkdir()
-                        width_cap=854 if height==480 else 1280
-                        log=run(['-map','0:v:0','-map','0:a:0?','-vf',scale_filter(width_cap,height),'-c:v','libx264','-preset','veryfast','-crf','25','-pix_fmt','yuv420p','-c:a','aac','-b:a','96k','-f','hls','-hls_time','4','-hls_playlist_type','vod','-hls_segment_filename',str(folder/'segment%05d.ts'),str(folder/'index.m3u8')])
-                        width,actual_height=output_dimensions(log)
-                        if width>width_cap or actual_height>height:raise RuntimeError('转码输出超过尺寸上限')
-                        rates=measure_playlist(folder/'index.m3u8',deadline,interrupted)
-                        variants.append({'profile':str(height),'width':width,'height':actual_height,**rates})
+                        # Only this attempt's temporary rendition can be discarded.
+                        # Published/legacy directories and the input are never edited.
+                        with tempfile.TemporaryDirectory(prefix='.rendition-',dir=target) as rendition:
+                            folder=Path(rendition)
+                            width_cap=854 if height==480 else 1280
+                            log=run(['-map','0:v:0','-map','0:a:0?','-vf',scale_filter(width_cap,height),'-c:v','libx264','-preset','veryfast','-crf','25','-pix_fmt','yuv420p','-c:a','aac','-b:a','96k','-f','hls','-hls_time','4','-hls_playlist_type','vod','-hls_segment_filename',str(folder/'segment%05d.ts'),str(folder/'index.m3u8')])
+                            width,actual_height=output_dimensions(log)
+                            if width>width_cap or actual_height>height:raise RuntimeError('转码输出超过尺寸上限')
+                            rates=measure_playlist(folder/'index.m3u8',deadline,interrupted)
+                            duplicate=next((v for v in variants if
+                                (v['width'],v['height'],v['output_bytes'],v['content_sha256'])==
+                                (width,actual_height,rates['output_bytes'],rates['content_sha256'])),None)
+                            check_deadline(deadline,interrupted)
+                            if duplicate is not None:
+                                duplicate.setdefault('deduplicated_profiles',[]).append(str(height))
+                                duplicate['deduplication_source']=rates['content_digest_source']
+                                duplicate['deduplicated_bytes']=duplicate.get('deduplicated_bytes',0)+rates['output_bytes']
+                            else:
+                                os.rename(folder,target/str(height))
+                                variants.append({'profile':str(height),'width':width,'height':actual_height,**rates})
                     (target/'master.m3u8').write_text(master_playlist(variants),encoding='utf-8')
                     check_deadline(deadline,interrupted)
                     with database(root) as db:

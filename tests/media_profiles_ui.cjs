@@ -29,4 +29,14 @@ context.updateMediaProfiles({state:'completed',variants:[{profile:'480',width:32
 assert.match(select.children[2].textContent,/极短片段/);
 context.document.querySelector=()=>null;
 assert.doesNotThrow(()=>context.updateMediaProfiles({state:'completed'}));
-console.log('Media profile UI: 16 assertions passed');
+context.document.querySelector=()=>select;
+select.value='720';
+context.updateMediaProfiles({state:'completed',variants:[{profile:'480',width:320,height:180,deduplicated_profiles:['720'],deduplication_source:'sha256-vod-bytes-v1'}]});
+assert.equal(select.children.length,3);
+assert.match(select.children[2].textContent,/已合并字节相同的 720 档/);
+assert.equal(select.value,'original');
+for(const metadata of [{deduplication_source:'dimensions-only'},{deduplicated_profiles:['../bad','480']},{deduplicated_profiles:'720'}]){
+  context.updateMediaProfiles({state:'completed',variants:[{profile:'480',width:320,height:180,deduplicated_profiles:['720'],deduplication_source:'sha256-vod-bytes-v1',...metadata}]});
+  assert.doesNotMatch(select.children[2].textContent,/已合并/);
+}
+console.log('Media profile UI: 22 assertions passed');

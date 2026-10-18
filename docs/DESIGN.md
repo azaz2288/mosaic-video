@@ -1,4 +1,4 @@
-# 架构设计 · v0.2.3
+# 架构设计 · v0.2.4
 
 main.py管理视频与互动；accounts.py提供账户和会话；community.py实现关注、历史、合集、通知与作品审阅。transcode.py在lifespan启动单个本机工作线程，SQLite事务抢占任务；媒体资源校验hidden状态和资源路径。FFmpeg由imageio-ffmpeg提供，hls.js处理浏览器MSE播放。
 
@@ -9,12 +9,16 @@ FastAPI + SQLite + 无构建原生Web UI。数据库外部调用不放入长写�
 - 上传检查容器头；后台FFmpeg真实解码决定转码是否成功。不是同步ffprobe完整校验。
 - 单进程本机队列；media_process.py在抢占后以monotonic总deadline控制封面与两档，默认300秒（服务端整数1..3600），排队不计。50ms轮询取消/stop/deadline，直接进程terminate→wait1s→kill→wait2s，结束后再验取消/预算；不是进程树沙箱或硬墙钟SLA，DB锁/IO可超时。media_profiles.py仍不放大、偶数对齐并保留SAR。
 - 从FFmpeg output stream读取实际编码尺寸，不能使用input stream或档位名字代替；无法确认则失败。成功两档写master RESOLUTION与SQLite variants_json，processing API公开variants，UI标签用实际尺寸。迁移添加列并使用显式INSERT字段，不丢旧任务。旧已完成任务无元数据时保留清单、明确未知尺寸；不自动重转旧数据。
-- 两档低清可能重复，尚未去重；日志parser只提供输出尺寸，不是完整探测/恶意媒体隔离。FFMPEG_PATH覆盖须提供兼容滤镜与英文stream日志和自产VOD TS清单；不支持时失败。只有imageio bundled Windows/Linux版本随CI验证。
+- 新任务编码后仅合并实际尺寸和清单+有序TS字节身份都相同的档；不能只用尺寸或档名判断相同。日志parser只提供输出尺寸，不是完整探测/恶意媒体隔离。FFMPEG_PATH覆盖须提供兼容滤镜与英文stream日志和自产VOD TS清单；不支持时失败。只有imageio bundled Windows/Linux版本随CI验证。
 - 举报由作品所有者审阅，尚无独立平台管理员审核；同分区推荐不是学习式个性化推荐。
 - 数据和媒体保存在本机；对象存储、CDN、分布式转码和公网部署仍待建设。
 - 默认回环访问，访客local是本机共享空间；账户可隔离内容，但不是公网多租户安全承诺。Cookie为本机HTTP设置，公网需TLS、安全Cookie、关闭访客、限流与部署审计。
 
 ## 取消与产物发布
+
+v0.2.4在同一严格measurement后为清单/有序TS构建`sha256-vod-bytes-v1`：域标签+NUL、8字节big-endian清单长度+原始清单（含暂存target0修复）、逐段8字节名称长度+ASCII名称+8字节内容长度+完整TS字节。路径绝对位置不参与；时长/顺序/封装/音频任一字节变化都会影响身份。TS每次最多1MiB，读取最多观察大小+1 EOF字节，比较打开fd的identity/mode/size/mtime、同fd前后ctime、路径完整fingerprint，末尾再验全部段/清单/父目录；Windows不将fd ctime与path ctime跨API比较。共用deadline/取消，不是硬IO/CPU/RSS限额。
+
+variants增加content_sha256/content_digest_source/output_bytes。每档在attempt内自己的`.rendition-*`编码；尺寸+output_bytes+digest匹配已保留档才由TemporaryDirectory回收本次重复副本，先480后720稳定保留480。保留档记录deduplicated_profiles、deduplication_source与deduplicated_bytes，SQLite JSON/master/API/UI持久一致；未合并不造徽标。逻辑字节仅清单+TS，既有发布/原视频/旧成功目录不改，旧任务不自动迁移去重。两次编码均实际运行，字节读取增加IO，不做视觉相似/分辨率等价去重或CPU性能承诺；metadata观测非本机恶意写者沙箱，摘要不等于认证/持续完整性验证。
 
 media_bandwidth.py在每档编码后测量真实TS字节与EXTINF。严格ASCII自产VOD version3/media-sequence0，唯一header/ENDLIST/正时长与目标时长、segment数字.ts无子路径；拒绝remote/编码转义/重复/加密/未支持tag/缺空或特殊segment。清单≤1MiB/每行1024字节/4096段，lstat拒绝祖先链接和Windows reparse，有限read前后identity/size/mtime/ctime，stat片段后测量结束复验。目录只比身份与类型（时间会因兄弟工作目录变化，无快照保证）。精确Fraction遍历连续窗口duration∈[0.5T,1.5T]取最大rate，平均用整VOD，ceil整数bps含封装开销。极短总时长<0.5T无标准窗口时最大单段rate，bandwidth_window明确short-vod-single-segment；FFmpeg自产target0且每段≤0.5秒时暂存修target1，不写旧已发布清单。修复/测量共用任务deadline/interrupted。
 

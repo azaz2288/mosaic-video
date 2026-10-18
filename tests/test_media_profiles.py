@@ -74,6 +74,8 @@ class ProfileTests(unittest.TestCase):
                         if state['state'] in {'completed','failed'}:break
                         time.sleep(.25)
                     self.assertEqual(state['state'],'completed',state)
+                    expected_count=2 if (width,height) in ((360,640),(1920,800),(1080,1080)) else 1
+                    self.assertEqual(len(state['variants']),expected_count,state['variants'])
                     master=client.get(f'/api/videos/{ident}/assets/master.m3u8').text
                     for variant in state['variants']:
                         profile=variant['profile'];w=variant['width'];h=variant['height']
